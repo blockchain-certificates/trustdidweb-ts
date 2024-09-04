@@ -1,17 +1,27 @@
 import { createSigner, createDID } from '../src/index';
 import storePath from "./constant/storePath";
 import fs from "node:fs";
+import {base58btc} from "multiformats/bases/base58";
 
 const availableKeys = {
   secp256k1: [
     {
-      "publicKeyMultibase": "zQ3shvX9Dd7cAG7ZcJN4d9DksshpVYSGpqEyrLjopoGpk97CR",
-      "secretKeyMultibase": "z42sPkL6ZTCeUKfTZejXUoAXqEyu9hCvKXeeerferF7aN9Bw"
+      // BTC Mainnet
+      "publicKeyMultibase": "zQ3shw8MAkueKou9VhRyX1v2hDQ2WENWVQNkg6ifhn8DG1gQW",
+      "secretKeyMultibase": "z3vLe1VYhhknE9VgKWKwr4paApJvY2jrVBe71vU3SmeyvgND"
+    },
+    {
+      // BTC Testnet & ETH
+      publicKeyMultibase: 'zQ3shvX9Dd7cAG7ZcJN4d9DksshpVYSGpqEyrLjopoGpk97CR',
+      secretKeyMultibase: 'z3vLXeaq5rH3HKuwaJLmvgRM2hD3RvF9tCuXrQZyg2kPTPgd',
     }
   ]
 }
 
-const currentAuthKey = {type: 'authentication', ...availableKeys.secp256k1[0]}
+const currentAuthKey = [
+  {type: 'assertionMethod', ...availableKeys.secp256k1[0]},
+  {type: 'assertionMethod', ...availableKeys.secp256k1[1]}
+]
 
 function saveDID (doc: any, log: any, version: number) {
   const saveDocPath = `${storePath}/${doc.id}/did.json`;
@@ -26,10 +36,10 @@ function saveDID (doc: any, log: any, version: number) {
 export async function initDID () {
   const did = await createDID({
     domain: 'blockcerts.org',
-    signer: createSigner(currentAuthKey!),
-    updateKeys: [`did:key:${currentAuthKey!.publicKeyMultibase}`],
+    signer: createSigner(currentAuthKey[0]!),
+    updateKeys: [`did:key:${currentAuthKey[0]!.publicKeyMultibase}`],
     verificationMethods: [
-      currentAuthKey!,
+      ...currentAuthKey!,
       // {type: 'assertionMethod', ...availableKeys.secp256k1[0]},
     ]});
 

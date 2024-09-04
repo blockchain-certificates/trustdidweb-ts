@@ -8,7 +8,7 @@ export const createDID = async (options: CreateDIDInterface): Promise<{did: stri
   if (!options.updateKeys) {
     throw new Error('Update keys not supplied')
   }
-  newKeysAreValid(options.updateKeys, [], options.nextKeyHashes ?? [], false, options.prerotate === true); 
+  newKeysAreValid(options.updateKeys, [], options.nextKeyHashes ?? [], false, options.prerotate === true);
   const controller = `did:${METHOD}:${options.domain}:${PLACEHOLDER}`;
   const createdDate = createDate(options.created);
   let {doc} = await createDIDDoc({...options, controller});
@@ -31,7 +31,7 @@ export const createDID = async (options: CreateDIDInterface): Promise<{did: stri
   initialLogEntry[0] = scid;
   initialLogEntry[3] = JSON.parse(JSON.stringify(initialLogEntry[3]).replaceAll(PLACEHOLDER, scid));
   initialLogEntry[4] = { value: doc }
-  
+  console.log('initial log', initialLogEntry);
   const logEntryHash = deriveHash(initialLogEntry);
   const signedDoc = await options.signer(doc, logEntryHash);
   initialLogEntry.push([signedDoc.proof]);
@@ -87,7 +87,7 @@ export const resolveDID = async (log: DIDLog, options: {versionId?: number, vers
       updateKeys = entry[3].updateKeys;
       prerotate = entry[3].prerotate === true;
       nextKeyHashes = entry[3].nextKeyHashes ?? [];
-      newKeysAreValid(updateKeys, [], nextKeyHashes, false, prerotate === true); 
+      newKeysAreValid(updateKeys, [], nextKeyHashes, false, prerotate === true);
       const logEntryHash = deriveHash(
         [
           PLACEHOLDER,

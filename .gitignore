@@ -3,5 +3,6 @@ test/logs
 .vscode
 node_modules
 bun.lockb
+dev/store
 
 .idea

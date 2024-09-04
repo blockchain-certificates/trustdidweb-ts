@@ -1,4 +1,5 @@
 import * as ed from '@noble/ed25519';
+import * as secp256k1 from '@noble/secp256k1';
 import { base58btc } from "multiformats/bases/base58";
 import { bytesToHex, deriveHash } from "./utils";
 import { canonicalize } from 'json-canonicalize';
@@ -8,10 +9,16 @@ export const keyIsAuthorized = (verificationMethod: string, updateKeys: string[]
   return updateKeys.includes(verificationMethod);
 }
 
+const PREFIXES = {
+  'secp256k1': 'zQ3s',
+  'ed25519': 'z6Mk'
+}
+
 export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: string[]) => {
   let i = 0;
   while(i < proofs.length) {
     const proof = proofs[i];
+    console.log('vm', proof.verificationMethod.split('#')[0], 'updateKeys', updateKeys);
     if (!keyIsAuthorized(proof.verificationMethod.split('#')[0], updateKeys)) {
       throw new Error(`key ${proof.verificationMethod} is not authorized to update.`)
     }
@@ -31,11 +38,27 @@ export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: 
     const proofHash = createHash('sha256').update(canonicalize(restProof)).digest();
     const input = Buffer.concat([dataHash, proofHash]);
 
-    const verified = await ed.verifyAsync(
-      bytesToHex(sig),
-      bytesToHex(input),
-      bytesToHex(publicKey.slice(2))
-    );
+    const multikeyPrefix = proof.verificationMethod.split('did:key:')[1].split('#')[0].slice(0, 4);
+    console.log(multikeyPrefix, proof.verificationMethod.split('did:key:')[1].split('#')[0]);
+    console.log('sig', sig);
+
+    let verified = false;
+    if (multikeyPrefix === PREFIXES.ed25519) {
+      verified = await ed.verifyAsync(
+        bytesToHex(sig),
+        bytesToHex(input),
+        bytesToHex(publicKey.slice(2))
+      );
+    } else if (multikeyPrefix === PREFIXES.secp256k1) {
+      const hashedInput = createHash('sha256').update(bytesToHex(input)).digest();
+      console.log('verifying hash', bytesToHex(hashedInput));
+      console.log('public key', publicKey.slice(2));
+      verified = secp256k1.verify(
+        bytesToHex(sig),
+        bytesToHex(hashedInput),
+        bytesToHex(publicKey.slice(2))
+      )
+    }
     if (!verified) {
       return false;
     }
