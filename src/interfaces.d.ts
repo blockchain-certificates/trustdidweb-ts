@@ -56,6 +56,7 @@ interface CreateDIDInterface {
   controller?: string;
   context?: string | string[];
   verificationMethods?: VerificationMethod[];
+  service?: ServiceEndpoint[];
   created?: Date;
   prerotate?: boolean;
   nextKeyHashes?: string[];

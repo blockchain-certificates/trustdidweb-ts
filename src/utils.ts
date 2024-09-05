@@ -22,7 +22,7 @@ export const deriveHash = (input: any): string => {
 }
 
 export const createDIDDoc = async (options: CreateDIDInterface): Promise<{doc: DIDDoc}> => {
-  const {controller} = options;
+  const {controller, service} = options;
   const {all} = normalizeVMs(options.verificationMethods, controller);
   return {
     doc: {
@@ -32,6 +32,7 @@ export const createDIDDoc = async (options: CreateDIDInterface): Promise<{doc: D
       ],
       id: controller,
       controller,
+      ...service && {service},
       ...all
     }
   };

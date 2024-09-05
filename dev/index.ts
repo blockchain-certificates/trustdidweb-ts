@@ -41,7 +41,15 @@ export async function initDID () {
     verificationMethods: [
       ...currentAuthKey!,
       // {type: 'assertionMethod', ...availableKeys.secp256k1[0]},
-    ]});
+    ],
+    service: [
+      {
+        id: '#service-1',
+        type: 'IssuerProfile',
+        serviceEndpoint: 'https://www.blockcerts.org/samples/3.0/issuer-blockcerts.json'
+      }
+    ]
+  });
 
   saveDID(did.doc, did.log, 1);
 
