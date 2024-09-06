@@ -5,6 +5,7 @@ import { bytesToHex, createDate } from "./utils";
 import { base58btc } from "multiformats/bases/base58"
 import { canonicalize } from 'json-canonicalize';
 import { createHash } from 'node:crypto';
+import * as secp256k1 from "@noble/secp256k1";
 
 export const createSigner = (vm: VerificationMethod) => {
   return async (doc: any, challenge: string) => {
@@ -22,9 +23,15 @@ export const createSigner = (vm: VerificationMethod) => {
       const input = Buffer.concat([dataHash, proofHash]);
       const secretKey = base58btc.decode(vm.secretKeyMultibase!);
 
-      const output = await ed.signAsync(bytesToHex(input), bytesToHex(secretKey.slice(2, 34)));
-
-      proof.proofValue = base58btc.encode(output);
+      let output;
+      if (vm.publicKeyMultibase!.startsWith('zQ3s')) {
+        const hashedInput = createHash('sha256').update(bytesToHex(input)).digest();
+        output = await secp256k1.signAsync(bytesToHex(hashedInput), bytesToHex(secretKey.slice(2, 34)));
+        proof.proofValue = base58btc.encode(output.toCompactRawBytes());console.log(output);
+      } else if (vm.publicKeyMultibase!.startsWith('z6Mk')) {
+        output = await ed.signAsync(bytesToHex(input), bytesToHex(secretKey.slice(2, 34)));
+        proof.proofValue = base58btc.encode(output);
+      }
       return {...doc, proof};
     } catch (e: any) {
       console.error(e)
