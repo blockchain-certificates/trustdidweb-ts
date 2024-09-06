@@ -37,7 +37,7 @@ export async function initDID () {
   const did = await createDID({
     domain: 'blockcerts.org',
     signer: createSigner(currentAuthKey[0]!),
-    updateKeys: [`did:key:${currentAuthKey[0]!.publicKeyMultibase}`],
+    updateKeys: [currentAuthKey[0]!.publicKeyMultibase],
     verificationMethods: [
       ...currentAuthKey!,
       // {type: 'assertionMethod', ...availableKeys.secp256k1[0]},

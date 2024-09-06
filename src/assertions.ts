@@ -33,8 +33,8 @@ export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: 
       throw new Error(`Unknown cryptosuite ${proof.cryptosuite}`);
     }
     const publicKey = base58btc.decode(proof.verificationMethod.split('did:key:')[1].split('#')[0]);
-    if (publicKey[0] !== 237 || publicKey[1] !== 1) {
-      throw new Error(`multiKey doesn't include ed25519 header (0xed01)`)
+    if ((publicKey[0] !== 237 && publicKey[0] !== 231) || publicKey[1] !== 1) {
+      throw new Error(`multiKey doesn't include ed25519 header (0xed01) nor a secp256k1 header (0x1301)`)
     }
     const {proofValue, ...restProof} = proof;
     const sig = base58btc.decode(proofValue);
@@ -43,8 +43,6 @@ export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: 
     const input = Buffer.concat([dataHash, proofHash]);
 
     const multikeyPrefix = proof.verificationMethod.split('did:key:')[1].split('#')[0].slice(0, 4);
-    console.log(multikeyPrefix, proof.verificationMethod.split('did:key:')[1].split('#')[0]);
-    console.log('sig', sig);
 
     let verified = false;
     if (multikeyPrefix === PREFIXES.ed25519) {
@@ -55,8 +53,6 @@ export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: 
       );
     } else if (multikeyPrefix === PREFIXES.secp256k1) {
       const hashedInput = createHash('sha256').update(bytesToHex(input)).digest();
-      console.log('verifying hash', bytesToHex(hashedInput));
-      console.log('public key', publicKey.slice(2));
       verified = secp256k1.verify(
         bytesToHex(sig),
         bytesToHex(hashedInput),
