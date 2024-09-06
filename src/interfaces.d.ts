@@ -18,15 +18,15 @@ interface DIDOperation {
 }
 
 type DIDLogEntry = [
-  logEntryHash: string,
-  versionId: number,
+  versionId: string,
   timestamp: string,
   params: {
     method?: string,
     scid?: string,
     updateKeys?: string[],
-    prerotate?: boolean,
-    nextKeyHashes?: string[]
+    prerotation?: boolean,
+    nextKeyHashes?: string[],
+    portable?: boolean
   },
   data: {value: any} | {patch: DIDOperation[]},
   proof?: any
@@ -58,8 +58,9 @@ interface CreateDIDInterface {
   verificationMethods?: VerificationMethod[];
   service?: ServiceEndpoint[];
   created?: Date;
-  prerotate?: boolean;
+  prerotation?: boolean;
   nextKeyHashes?: string[];
+  portable?: boolean;
 }
 
 interface SignDIDDocInterface {
@@ -78,9 +79,9 @@ interface UpdateDIDInterface {
   services?: ServiceEndpoint[];
   alsoKnownAs?: string[];
   domain?: string;
-  updated?: Date;
+  updated?: Date | string;
   deactivated?: boolean;
-  prerotate?: boolean;
+  prerotation?: boolean;
   nextKeyHashes?: string[];
 }
 

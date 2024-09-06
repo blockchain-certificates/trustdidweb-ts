@@ -1,14 +1,10 @@
 import { resolveDID } from '../method';
-import storePath from "../../dev/constant/storePath";
+import { getFileUrl } from '../utils';
 
-export const getLatestDIDDoc = async ({params: {id, isTest = false}, set}: {params: {id: string; isTest: boolean}; set: any;}) => {
-  console.log(`Resolving ${id}...`);
-  // TODO: actually set isTest somewhere so that it gets consumed
-  const path = isTest ? './test/logs' : storePath;
+export const getLatestDIDDoc = async ({params: {id}, set}: {params: {id: string;}; set: any;}) => {
   try {
-    const didLog = await Bun.file(`${path}/${id}/did.jsonl`).text();
-    // console.log(didLog)
-    // const logLine: string = '[{"op":"replace","path":"/proof/proofValue","value":"z128ss1..."}]';
+    const url = getFileUrl(id);
+    const didLog = await (await fetch(url)).text();
     const logEntries: DIDLog = didLog.trim().split('\n').map(l => JSON.parse(l));
     const {did, doc, meta} = await resolveDID(logEntries);
     return {doc, meta};
@@ -16,4 +12,8 @@ export const getLatestDIDDoc = async ({params: {id, isTest = false}, set}: {para
     console.error(e)
     throw new Error(`Failed to resolve DID`);
   }
+}
+
+export const getLogFile = ({params: {scid}}: {params: {scid: string}}) => {
+  return Bun.file(`./test/logs/${scid}/did.jsonl`);
 }
