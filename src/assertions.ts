@@ -3,7 +3,7 @@ import * as secp256k1 from '@noble/secp256k1';
 import { base58btc } from "multiformats/bases/base58";
 import { bytesToHex, createSCID, deriveHash } from "./utils";
 import { canonicalize } from 'json-canonicalize';
-import { createHash } from 'node:crypto';
+import crypto from './crypto';
 
 export const keyIsAuthorized = (key: string, updateKeys: string[]) => {
   if (process.env.IGNORE_ASSERTION_KEY_IS_AUTHORIZED) return true;
@@ -38,8 +38,8 @@ export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: 
     }
     const {proofValue, ...restProof} = proof;
     const sig = base58btc.decode(proofValue);
-    const dataHash = createHash('sha256').update(canonicalize(doc)).digest();
-    const proofHash = createHash('sha256').update(canonicalize(restProof)).digest();
+    const dataHash = crypto!.createHash('sha256').update(canonicalize(doc)).digest();
+    const proofHash = crypto!.createHash('sha256').update(canonicalize(restProof)).digest();
     const input = Buffer.concat([dataHash, proofHash]);
 
     const multikeyPrefix = proof.verificationMethod.split('did:key:')[1].split('#')[0].slice(0, 4);
@@ -52,7 +52,7 @@ export const documentStateIsValid = async (doc: any, proofs: any[], updateKeys: 
         bytesToHex(publicKey.slice(2))
       );
     } else if (multikeyPrefix === PREFIXES.secp256k1) {
-      const hashedInput = createHash('sha256').update(bytesToHex(input)).digest();
+      const hashedInput = crypto!.createHash('sha256').update(bytesToHex(input)).digest();
       verified = secp256k1.verify(
         bytesToHex(sig),
         bytesToHex(hashedInput),
