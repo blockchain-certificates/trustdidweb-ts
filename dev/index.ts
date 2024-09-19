@@ -1,7 +1,6 @@
-import { createSigner, createDID } from '../src/index';
+import {createSigner, createDID, generateEd25519VerificationMethod} from '../src/index';
 import storePath from "./constant/storePath";
 import fs from "node:fs";
-import {base58btc} from "multiformats/bases/base58";
 
 const availableKeys = {
   secp256k1: [
@@ -18,10 +17,14 @@ const availableKeys = {
   ]
 }
 
-const currentAuthKey = [
-  {type: 'assertionMethod', ...availableKeys.secp256k1[0]},
-  {type: 'assertionMethod', ...availableKeys.secp256k1[1]}
-]
+async function getAuthKeys () {
+  const ed25519DidKey = await generateEd25519VerificationMethod('authentication');
+  return [
+    ed25519DidKey,
+    {type: 'assertionMethod', ...availableKeys.secp256k1[0]},
+    {type: 'assertionMethod', ...availableKeys.secp256k1[1]}
+  ]
+}
 
 function saveDID (doc: any, log: any, version: number) {
   const saveDocPath = `${storePath}/${doc.id}/did.json`;
@@ -34,13 +37,14 @@ function saveDID (doc: any, log: any, version: number) {
 }
 
 export async function initDID () {
+  const currentAuthKey = await getAuthKeys();
+  console.log(currentAuthKey);
   const did = await createDID({
     domain: 'blockcerts.org',
     signer: createSigner(currentAuthKey[0]!),
     updateKeys: [currentAuthKey[0]!.publicKeyMultibase],
     verificationMethods: [
-      ...currentAuthKey!,
-      // {type: 'assertionMethod', ...availableKeys.secp256k1[0]},
+      ...currentAuthKey!
     ],
     service: [
       {

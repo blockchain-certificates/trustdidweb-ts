@@ -72,16 +72,18 @@ export const hashChainValid = (derivedHash: string, logEntryHash: string) => {
   return derivedHash === logEntryHash;
 }
 
-export const newKeysAreValid = (updateKeys: string[], previousNextKeyHashes: string[], nextKeyHashes: string[], previousPrerotation: boolean, prerotation: boolean) => {
+export const newKeysAreValid = async (updateKeys: string[], previousNextKeyHashes: string[], nextKeyHashes: string[], previousPrerotation: boolean, prerotation: boolean) => {
   if (process.env.IGNORE_ASSERTION_NEW_KEYS_ARE_VALID) return true;
   if (prerotation && nextKeyHashes.length === 0) {
     throw new Error(`nextKeyHashes are required if prerotation enabled`);
   }
   if(previousPrerotation) {
-    const inNextKeyHashes = updateKeys.reduce((result, key) => {
-      const hashedKey = deriveHash(key);
-      return result && previousNextKeyHashes.includes(hashedKey);
-    }, true);
+    const hashedKeys: string[] = [];
+    for (let i = 0; i < updateKeys.length; i++) {
+      const hashedKey = await deriveHash(updateKeys[i]);
+      hashedKeys.push(hashedKey);
+    }
+    const inNextKeyHashes: boolean = hashedKeys.filter(value => previousNextKeyHashes.includes(value)).length > 0;
     if (!inNextKeyHashes) {
       throw new Error(`invalid updateKeys ${updateKeys}`);
     }

@@ -8,7 +8,7 @@ export const createDID = async (options: CreateDIDInterface): Promise<{did: stri
   if (!options.updateKeys) {
     throw new Error('Update keys not supplied')
   }
-  newKeysAreValid(options.updateKeys, [], options.nextKeyHashes ?? [], false, options.prerotation === true); 
+  await newKeysAreValid(options.updateKeys, [], options.nextKeyHashes ?? [], false, options.prerotation === true);
   const controller = `did:${METHOD}:${PLACEHOLDER}:${options.domain}`;
   const createdDate = createDate(options.created);
   let {doc} = await createDIDDoc({...options, controller});
@@ -24,7 +24,7 @@ export const createDID = async (options: CreateDIDInterface): Promise<{did: stri
     },
     {value: doc}
   ]
-  const initialLogEntryHash = deriveHash(initialLogEntry);
+  const initialLogEntryHash = await deriveHash(initialLogEntry);
   const scid = await createSCID(initialLogEntryHash);
   doc = JSON.parse(JSON.stringify(doc).replaceAll(PLACEHOLDER, scid));
 
@@ -92,8 +92,8 @@ export const resolveDID = async (log: DIDLog, options: {versionNumber?: number, 
       updateKeys = params.updateKeys;
       prerotation = params.prerotation === true;
       nextKeyHashes = params.nextKeyHashes ?? [];
-      newKeysAreValid(updateKeys, [], nextKeyHashes, false, prerotation === true); 
-      const logEntryHash = deriveHash(
+      await newKeysAreValid(updateKeys, [], nextKeyHashes, false, prerotation === true);
+      const logEntryHash = await deriveHash(
         [
           PLACEHOLDER,
           created,
@@ -125,7 +125,7 @@ export const resolveDID = async (log: DIDLog, options: {versionNumber?: number, 
       } else if (newHost !== host) {
         host = newHost;
       }
-      newKeysAreValid(params.updateKeys ?? [], nextKeyHashes, params.nextKeyHashes ?? [], prerotation, params.prerotation === true);
+      await newKeysAreValid(params.updateKeys ?? [], nextKeyHashes, params.nextKeyHashes ?? [], prerotation, params.prerotation === true);
       if (!hashChainValid(`${i+1}-${entryHash}`, entry[0])) {
         throw new Error(`Hash chain broken at '${versionId}'`);
       }
@@ -186,7 +186,7 @@ export const updateDID = async (options: UpdateDIDInterface): Promise<{did: stri
     controller, domain, nextKeyHashes, prerotation
   } = options;
   let {did, doc, meta} = await resolveDID(log);
-  newKeysAreValid(updateKeys ?? [], meta.nextKeyHashes ?? [], nextKeyHashes ?? [], meta.prerotation === true, prerotation === true);
+  await newKeysAreValid(updateKeys ?? [], meta.nextKeyHashes ?? [], nextKeyHashes ?? [], meta.prerotation === true, prerotation === true);
 
   if (domain) {
     if (!meta.portable) {
@@ -216,7 +216,7 @@ export const updateDID = async (options: UpdateDIDInterface): Promise<{did: stri
     },
     {patch: clone(patch)}
   ];
-  const logEntryHash = deriveHash(logEntry);
+  const logEntryHash = await deriveHash(logEntry);
   logEntry[0] = `${nextVersion}-${logEntryHash}`;
   const signedDoc = await options.signer(newDoc, logEntry[0]);
   logEntry.push([signedDoc.proof])
@@ -259,7 +259,7 @@ export const deactivateDID = async (options: DeactivateDIDInterface): Promise<{d
     {deactivated: true},
     {patch: clone(patch)}
   ];
-  const logEntryHash = deriveHash(logEntry);
+  const logEntryHash = await deriveHash(logEntry);
   logEntry[0] = `${nextVersion}-${logEntryHash}`;
   const signedDoc = await options.signer(newDoc, logEntry[0]);
   logEntry.push([signedDoc.proof]);

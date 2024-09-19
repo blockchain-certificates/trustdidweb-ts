@@ -10,17 +10,17 @@ export const getFileUrl = (id: string) => {
   if (!id.startsWith('did:tdw:')) {
     throw new Error(`${id} is not a valid did:tdw identifier`);
   }
-  
+
   const parts = id.split(':');
   if (parts.length < 4) {
     throw new Error(`${id} is not a valid did:tdw identifier`);
   }
-  
+
   const scid = parts[2];
   const domain = parts.slice(3).join(':');
-  
+
   const protocol = domain.includes('localhost') ? 'http' : 'https';
-  
+
   if (domain.includes('/')) {
     return `${protocol}://${domain}/did.jsonl`;
   }
@@ -37,10 +37,11 @@ export const createSCID = async (logEntryHash: string): Promise<string> => {
   return logEntryHash;
 }
 
-export const deriveHash = (input: any): string => {
+export const deriveHash = async (input: any): Promise<string> => {
   const data = canonicalize(input);
   const encoder = new TextEncoder();
-  return base58btc.encode((sha256.digest(encoder.encode(data)) as any).bytes);
+  const digest = await sha256.digest(encoder.encode(data));
+  return base58btc.encode(digest.bytes);
 }
 
 export const createDIDDoc = async (options: CreateDIDInterface): Promise<{doc: DIDDoc}> => {
